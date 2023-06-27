@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Ai</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        #chat-container {
+            max-width: 600px;
+            height: 500px;
+            margin: 90px auto;
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #chat-log {
+          background-color:#696767;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: scroll;
+        }
+
+
+        .message {
+            margin-bottom: 10px;
+            padding: 5px;
+            border-bottom-right-radius: 5px;
+            border-bottom-left-radius: 5px ;
+            border-top-left-radius: 5px;
+        }
+
+        .user {
+            background-color: #b3d4fc;
+            margin-bottom: 10px;
+      
+        }
+
+        .assistant {
+            margin-bottom: 10px;
+            padding: 10px 10px;
+            background-color: #cccccc;
+            border-bottom-right-radius: 5px;
+            border-bottom-left-radius: 5px ;
+            border-top-right-radius: 5px;
+        }
+
+        .system {
+            background-color: #eaeaea;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 80px);
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        button {
+          float: right;
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 14px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-log"></div>
+        <div id="user-input-container">
+            <input type="text" id="user-input" placeholder="Escribe tu mensaje..." />
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+        <div id="api-input-container">
+            <input type="text" id="api-key-input" placeholder="Ingresa tu clave de API" />
+            <button onclick="setApiKey()">Guardar API Key</button>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+   
+    <script>
+        let apiKey = '';
+
+        window.onload = function() {
+            const savedApiKey = localStorage.getItem('apiKey');
+            if (savedApiKey) {
+                apiKey = savedApiKey;
+                document.getElementById('api-key-input').value = apiKey;
+            }
+        };
+        
+
+        function setApiKey() {
+            const apiKeyInput = document.getElementById('api-key-input');
+            apiKey = apiKeyInput.value;
+            localStorage.setItem('apiKey', apiKey);
+            apiKeyInput.value = '';
+        }
+
+        async function sendMessage() {
+            const userInput = document.getElementById('user-input');
+            const message = userInput.value;
+            userInput.value = '';
+
+            appendMessage('user', message);
+
+            try {
+                const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+                    "model": "gpt-3.5-turbo",
+                    "messages": [
+                        {"role": "system", "content": "You are a helpful assistant."},
+                        {"role": "user", "content": message}
+                    ]
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const reply = response.data.choices[0].message.content;
+                appendMessage('assistant', reply);
+            } catch (error) {
+                console.error(error);
+                appendMessage('assistant', 'Lo siento, ha ocurrido un error.');
+            }
+        }
+
+        function appendMessage(role, content) {
+            const chatLog = document.getElementById('chat-log');
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message', role);
+            messageContainer.textContent = content;
+
+            if (role === 'assistant') {
+                const assistantContainer = document.createElement('div');
+                assistantContainer.classList.add('message-container');
+                const assistantMessage = document.createElement('div');
+                assistantMessage.classList.add('assistant');
+                assistantMessage.textContent = content;
+                assistantContainer.appendChild(assistantMessage);
+                chatLog.appendChild(assistantContainer);
+            } else {
+                chatLog.appendChild(messageContainer);
+            }
+
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+    </script>
+</body>
+</html>
