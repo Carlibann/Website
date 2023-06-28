@@ -21,7 +21,7 @@
 
         #chat-container {
             max-width: 600px;
-            margin: 0 auto;
+            margin: 80px auto;
             background-color: #f5f5f5;
             padding: 20px;
             border-radius: 10px;
@@ -66,6 +66,7 @@
         .message {
       
             display: inline-block;
+            overflow-y: scroll;
 
         }
         .assistant {
@@ -174,8 +175,8 @@
                         <strong>API Key:</strong>
                         <input type="text" id="api-key-input" value="*" disabled>
                     </p>
-                    <button onclick="exportApiKey()">Exportar API Key</button>
-                    <button onclick="importApiKey()">Importar API Key</button>
+                    <button onclick="exportApiKey()">Exportar Key</button>
+                    <button onclick="importApiKey()">Importar Key</button>
                     <button onclick="closeConfigPopup()">Cerrar</button>
                 </div>
             </div>
