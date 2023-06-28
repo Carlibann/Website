@@ -1,8 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Chat Ai</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.10.0/jspdf.umd.min.js"></script>
+    <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
+
+    <title>Chat IA</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -11,155 +21,287 @@
 
         #chat-container {
             max-width: 600px;
-            height: 500px;
-            margin: 90px auto;
+            margin: 0 auto;
             background-color: #f5f5f5;
             padding: 20px;
+            border-radius: 10px;
+        }
+
+        .options-menu {
+            text-align: right;
+            margin-bottom: 10px;
+        }
+
+        .options-menu-button {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
             border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
         }
 
-        #chat-log {
-          background-color:#696767;
-            margin-bottom: 20px;
+        .options-menu-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 5px;
+            
+        }
+
+        .options-menu-content a {
+            display: block;
             padding: 10px;
-            border: 1px solid #ccc;
-            height: 300px;
-            overflow-y: scroll;
+            text-decoration: none;
+            color: #333;
         }
 
+        .options-menu-content a:hover {
+            background-color: #f4f4f4;
+        }
 
         .message {
-            margin-bottom: 10px;
-            padding: 5px;
-            border-bottom-right-radius: 5px;
-            border-bottom-left-radius: 5px ;
-            border-top-left-radius: 5px;
-        }
-
-        .user {
-            background-color: #b3d4fc;
-            margin-bottom: 10px;
       
-        }
+            display: inline-block;
 
+        }
         .assistant {
+            
+            width: 80%;
             margin-bottom: 10px;
-            padding: 10px 10px;
             background-color: #cccccc;
-            border-bottom-right-radius: 5px;
-            border-bottom-left-radius: 5px ;
-            border-top-right-radius: 5px;
+            padding: 10px 10px;
+            border-radius: 5px;
+        }
+        .user {
+          
+            float: right;
+            width: 80%;
+            margin-bottom: 10px;
+            background-color: #7ec26b;
+            padding: 10px 10px;
+            border-radius: 5px;
         }
 
-        .system {
-            background-color: #eaeaea;
+        .user .message {
+            
+            width: 90%;
+            color: #fff;
+            text-align: left;
         }
 
-        input[type="text"] {
-            width: calc(100% - 80px);
+        .assistant .message {
+            background-color: #ccc;
+        }
+
+        .cntt {
+            display: block;
+            text-align: center;
+        }
+
+        #user-input {
+            width: 80%;
             padding: 10px;
-            font-size: 14px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
+            border-radius: 5px;
+            border: none;
+            word-wrap: break-word;
+            
         }
 
-        button {
-          float: right;
-            margin: 10px;
+        #send-button {
+            margin-left: 10px;
+            padding: 10px 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .config-popup {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            padding-top: 100px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .config-popup-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .config-popup-content button {
+            margin-top: 10px;
             padding: 10px 20px;
             font-size: 14px;
             background-color: #4CAF50;
             color: #fff;
             border: none;
-            border-radius: 3px;
+            border-radius: 50px;
             cursor: pointer;
+        }
+        
+        .disabled {
+            pointer-events: none;
+            opacity: 0.6;
         }
     </style>
 </head>
 <body>
     <div id="chat-container">
-        <div id="chat-log"></div>
-        <div id="user-input-container">
-            <input type="text" id="user-input" placeholder="Escribe tu mensaje..." />
-            <button onclick="sendMessage()">Enviar</button>
+        <div class="options-menu">
+            <button class="options-menu-button" onclick="showConfigPopup()">Configuración</button>
+            <div id="config-popup" class="config-popup">
+                <div class="config-popup-content">
+                    <h2>Configuración</h2>
+                    <p>
+                        <strong>API Key:</strong>
+                        <input type="text" id="api-key-input" value="*" disabled>
+                    </p>
+                    <button onclick="exportApiKey()">Exportar API Key</button>
+                    <button onclick="importApiKey()">Importar API Key</button>
+                    <button onclick="closeConfigPopup()">Cerrar</button>
+                </div>
+            </div>
         </div>
-        <div id="api-input-container">
-            <input type="text" id="api-key-input" placeholder="Ingresa tu clave de API" />
-            <button onclick="setApiKey()">Guardar API Key</button>
+        <div id="chat-log"></div>
+        <div class="cntt">
+            <input type="text" id="user-input" placeholder="Escribe un mensaje..." autofocus>
+            <button id="send-button" onclick="handleSendClick()" class="disabled">Enviar</button>
         </div>
     </div>
 
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-   
     <script>
-        let apiKey = '';
+     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(apiKey));
+     
+        const apiKey = localStorage.getItem('apiKey' + encodeURIComponent);
+        let conversations = localStorage.getItem('conversations');
+        conversations = conversations ? JSON.parse(conversations) : [];
 
-        window.onload = function() {
-            const savedApiKey = localStorage.getItem('apiKey');
-            if (savedApiKey) {
-                apiKey = savedApiKey;
-                document.getElementById('api-key-input').value = apiKey;
-            }
-        };
-        
+        document.getElementById('send-button').classList.remove('disabled');
 
-        function setApiKey() {
-            const apiKeyInput = document.getElementById('api-key-input');
-            apiKey = apiKeyInput.value;
-            localStorage.setItem('apiKey', apiKey);
-            apiKeyInput.value = '';
+        if (!apiKey) {
+            showConfigPopup();
+        } else {
+            document.getElementById('api-key-input').value = '**********';
+            document.getElementById('send-button').classList.remove('disabled');
+            sendMessage();
         }
 
-        async function sendMessage() {
+        function sendMessage() {
             const userInput = document.getElementById('user-input');
-            const message = userInput.value;
-            userInput.value = '';
+            const message = userInput.value.trim();
+
+            if (message === '') {
+                return;
+            }
 
             appendMessage('user', message);
+            userInput.value = '';
+            userInput.focus();
+            conversations.push({ role: 'user', content: message });
+            localStorage.setItem('conversations', JSON.stringify(conversations));
 
-            try {
-                const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-                    "model": "gpt-3.5-turbo",
-                    "messages": [
-                        {"role": "system", "content": "You are a helpful assistant."},
-                        {"role": "user", "content": message}
-                    ]
-                }, {
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
+            axios.post('https://api.openai.com/v1/chat/completions', {
+                model: 'gpt-3.5-turbo',
+                messages: [
+                    { role: 'system', content: 'You are a helpful assistant.' },
+                    ...conversations
+                ]
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                }
+            })
+            .then(response => {
+                const { choices } = response.data;
+                const assistantReply = choices[0].message.content;
+                appendMessage('assistant', assistantReply);
+                conversations.push({ role: 'assistant', content: assistantReply });
+                localStorage.setItem('conversations', JSON.stringify(conversations));
 
-                const reply = response.data.choices[0].message.content;
-                appendMessage('assistant', reply);
-            } catch (error) {
-                console.error(error);
-                appendMessage('assistant', 'Lo siento, ha ocurrido un error.');
-            }
+            })
+            .catch(error => {
+                console.log(error);
+            });
         }
 
         function appendMessage(role, content) {
             const chatLog = document.getElementById('chat-log');
             const messageContainer = document.createElement('div');
+            const messageElement = document.createElement('div');
+            messageElement.innerText = content;
+            messageContainer.appendChild(messageElement);
             messageContainer.classList.add('message', role);
-            messageContainer.textContent = content;
-
-            if (role === 'assistant') {
-                const assistantContainer = document.createElement('div');
-                assistantContainer.classList.add('message-container');
-                const assistantMessage = document.createElement('div');
-                assistantMessage.classList.add('assistant');
-                assistantMessage.textContent = content;
-                assistantContainer.appendChild(assistantMessage);
-                chatLog.appendChild(assistantContainer);
-            } else {
-                chatLog.appendChild(messageContainer);
-            }
-
+            chatLog.appendChild(messageContainer);
             chatLog.scrollTop = chatLog.scrollHeight;
         }
+
+        function showConfigPopup() {
+            const configPopup = document.getElementById('config-popup');
+            configPopup.style.display = 'block';
+        }
+
+        function closeConfigPopup() {
+            const configPopup = document.getElementById('config-popup');
+            configPopup.style.display = 'none';
+        }
+
+        function exportApiKey() {
+            const apiKey = localStorage.getItem('apiKey');
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(apiKey));
+            element.setAttribute('download', 'key.bin');
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        function importApiKey() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.bin';
+            input.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const apiKey = e.target.result;
+                    localStorage.setItem('apiKey', apiKey);
+                    window.location.reload();
+                };
+                reader.readAsText(file);
+            });
+            input.click();
+        }
+
+        function handleSendClick() {
+            if (!apiKey) {
+                showConfigPopup();
+                return;
+            }
+            sendMessage();
+        }
+
+
     </script>
+    
 </body>
 </html>
